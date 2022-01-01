@@ -21,9 +21,11 @@ echo "airframes: ${ALL_AIRFRAMES}"
 for airframe in $ALL_AIRFRAMES
 do
 	echo
-	echo "##########################################################################################"
+	echo
+	echo
+	echo "########################################################################################################################"
 	echo " Airframe: $airframe"
-	echo "##########################################################################################"
+	echo "########################################################################################################################"
 	echo
 
 	${DIR}/nsh_param_set.py --device ${SERIAL_DEVICE} --name SYS_AUTOSTART  --value $airframe
@@ -35,9 +37,8 @@ do
 
 	${DIR}/reboot.py --device ${SERIAL_DEVICE}
 
-	${DIR}/run_nsh_cmd.py --device ${SERIAL_DEVICE} --cmd 'param dump /fs/mtd_params' || true
+	${DIR}/run_nsh_cmd.py --device ${SERIAL_DEVICE} --cmd 'param dump /fs/mtd_params/parameters.bson' || true
 	${DIR}/run_nsh_cmd.py --device ${SERIAL_DEVICE} --cmd 'param dump /fs/microsd/parameters_backup.bson' || true
-	${DIR}/run_nsh_cmd.py --device ${SERIAL_DEVICE} --cmd 'param dump /fs/microsd/param_import_fail.bson' || true
 
 	${DIR}/run_nsh_cmd.py --device ${SERIAL_DEVICE} --cmd 'ps'
 	${DIR}/run_nsh_cmd.py --device ${SERIAL_DEVICE} --cmd 'work_queue status'
