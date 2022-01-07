@@ -90,6 +90,8 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_parameters_manager(parent),
 	_mavlink_timesync(parent)
 {
+	_handle_rc_in_mode = param_find("COM_RC_IN_MODE");
+
 	_handle_sens_flow_maxhgt = param_find("SENS_FLOW_MAXHGT");
 	_handle_sens_flow_maxr = param_find("SENS_FLOW_MAXR");
 	_handle_sens_flow_minhgt = param_find("SENS_FLOW_MINHGT");
@@ -116,189 +118,235 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
 	switch (msg->msgid) {
 	case MAVLINK_MSG_ID_COMMAND_LONG:
+		PX4_INFO("Handled MAVLINK_MSG_ID_COMMAND_LONG");
 		handle_message_command_long(msg);
 		break;
 
 	case MAVLINK_MSG_ID_COMMAND_INT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_COMMAND_INT");
 		handle_message_command_int(msg);
 		break;
 
 	case MAVLINK_MSG_ID_COMMAND_ACK:
+		PX4_INFO("Handled MAVLINK_MSG_ID_COMMAND_ACK");
 		handle_message_command_ack(msg);
 		break;
 
 	case MAVLINK_MSG_ID_OPTICAL_FLOW_RAD:
+		PX4_INFO("Handled MAVLINK_MSG_ID_OPTICAL_FLOW_RAD");
 		handle_message_optical_flow_rad(msg);
 		break;
 
 	case MAVLINK_MSG_ID_PING:
+		PX4_INFO("Handled MAVLINK_MSG_ID_PING");
 		handle_message_ping(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SET_MODE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SET_MODE");
 		handle_message_set_mode(msg);
 		break;
 
 	case MAVLINK_MSG_ID_ATT_POS_MOCAP:
+		PX4_INFO("Handled MAVLINK_MSG_ID_ATT_POS_MOCAP");
 		handle_message_att_pos_mocap(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED");
 		handle_message_set_position_target_local_ned(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT");
 		handle_message_set_position_target_global_int(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SET_ATTITUDE_TARGET:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SET_ATTITUDE_TARGET");
 		handle_message_set_attitude_target(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SET_ACTUATOR_CONTROL_TARGET:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SET_ACTUATOR_CONTROL_TARGET");
 		handle_message_set_actuator_control_target(msg);
 		break;
 
 	case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE");
 		handle_message_vision_position_estimate(msg);
 		break;
 
 	case MAVLINK_MSG_ID_ODOMETRY:
+		PX4_INFO("Handled MAVLINK_MSG_ID_ODOMETRY");
 		handle_message_odometry(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN");
 		handle_message_set_gps_global_origin(msg);
 		break;
 
 	case MAVLINK_MSG_ID_RADIO_STATUS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_RADIO_STATUS");
 		handle_message_radio_status(msg);
 		break;
 
 	case MAVLINK_MSG_ID_MANUAL_CONTROL:
+		PX4_INFO("Handled MAVLINK_MSG_ID_MANUAL_CONTROL");
 		handle_message_manual_control(msg);
 		break;
 
 	case MAVLINK_MSG_ID_RC_CHANNELS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_RC_CHANNELS");
 		handle_message_rc_channels(msg);
 		break;
 
 	case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE");
 		handle_message_rc_channels_override(msg);
 		break;
 
 	case MAVLINK_MSG_ID_HEARTBEAT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_HEARTBEAT");
 		handle_message_heartbeat(msg);
 		break;
 
 	case MAVLINK_MSG_ID_DISTANCE_SENSOR:
+		PX4_INFO("Handled MAVLINK_MSG_ID_DISTANCE_SENSOR");
 		handle_message_distance_sensor(msg);
 		break;
 
 	case MAVLINK_MSG_ID_FOLLOW_TARGET:
+		PX4_INFO("Handled MAVLINK_MSG_ID_FOLLOW_TARGET");
 		handle_message_follow_target(msg);
 		break;
 
 	case MAVLINK_MSG_ID_LANDING_TARGET:
+		PX4_INFO("Handled MAVLINK_MSG_ID_LANDING_TARGET");
 		handle_message_landing_target(msg);
 		break;
 
 	case MAVLINK_MSG_ID_CELLULAR_STATUS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_CELLULAR_STATUS");
 		handle_message_cellular_status(msg);
 		break;
 
 	case MAVLINK_MSG_ID_ADSB_VEHICLE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_ADSB_VEHICLE");
 		handle_message_adsb_vehicle(msg);
 		break;
 
 	case MAVLINK_MSG_ID_UTM_GLOBAL_POSITION:
+		PX4_INFO("Handled MAVLINK_MSG_ID_UTM_GLOBAL_POSITION");
 		handle_message_utm_global_position(msg);
 		break;
 
 	case MAVLINK_MSG_ID_COLLISION:
+		PX4_INFO("Handled MAVLINK_MSG_ID_COLLISION");
 		handle_message_collision(msg);
 		break;
 
 	case MAVLINK_MSG_ID_GPS_RTCM_DATA:
+		PX4_INFO("Handled MAVLINK_MSG_ID_GPS_RTCM_DATA");
 		handle_message_gps_rtcm_data(msg);
 		break;
 
 	case MAVLINK_MSG_ID_BATTERY_STATUS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_BATTERY_STATUS");
 		handle_message_battery_status(msg);
 		break;
 
 	case MAVLINK_MSG_ID_SERIAL_CONTROL:
+		PX4_INFO("Handled MAVLINK_MSG_ID_SERIAL_CONTROL");
 		handle_message_serial_control(msg);
 		break;
 
 	case MAVLINK_MSG_ID_LOGGING_ACK:
+		PX4_INFO("Handled MAVLINK_MSG_ID_LOGGING_ACK");
 		handle_message_logging_ack(msg);
 		break;
 
 	case MAVLINK_MSG_ID_PLAY_TUNE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_PLAY_TUNE");
 		handle_message_play_tune(msg);
 		break;
 
 	case MAVLINK_MSG_ID_PLAY_TUNE_V2:
+		PX4_INFO("Handled MAVLINK_MSG_ID_PLAY_TUNE_V2");
 		handle_message_play_tune_v2(msg);
 		break;
 
 	case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_OBSTACLE_DISTANCE");
 		handle_message_obstacle_distance(msg);
 		break;
 
 	case MAVLINK_MSG_ID_TRAJECTORY_REPRESENTATION_BEZIER:
+		PX4_INFO("Handled MAVLINK_MSG_ID_TRAJECTORY_REPRESENTATION_BEZIER");
 		handle_message_trajectory_representation_bezier(msg);
 		break;
 
 	case MAVLINK_MSG_ID_TRAJECTORY_REPRESENTATION_WAYPOINTS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_TRAJECTORY_REPRESENTATION_WAYPOINTS");
 		handle_message_trajectory_representation_waypoints(msg);
 		break;
 
 	case MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS");
 		handle_message_onboard_computer_status(msg);
 		break;
 
 	case MAVLINK_MSG_ID_GENERATOR_STATUS:
+		PX4_INFO("Handled MAVLINK_MSG_ID_GENERATOR_STATUS");
 		handle_message_generator_status(msg);
 		break;
 
 	case MAVLINK_MSG_ID_STATUSTEXT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_STATUSTEXT");
 		handle_message_statustext(msg);
 		break;
 
 #if !defined(CONSTRAINED_FLASH)
 
 	case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_NAMED_VALUE_FLOAT");
 		handle_message_named_value_float(msg);
 		break;
 
 	case MAVLINK_MSG_ID_DEBUG:
+		PX4_INFO("Handled MAVLINK_MSG_ID_DEBUG");
 		handle_message_debug(msg);
 		break;
 
 	case MAVLINK_MSG_ID_DEBUG_VECT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_DEBUG_VECT");
 		handle_message_debug_vect(msg);
 		break;
 
 	case MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY:
+		PX4_INFO("Handled MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY");
 		handle_message_debug_float_array(msg);
 		break;
 #endif // !CONSTRAINED_FLASH
 
 	case MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_ATTITUDE:
+		PX4_INFO("Handled MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_ATTITUDE");
 		handle_message_gimbal_manager_set_attitude(msg);
 		break;
 
 	case MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_MANUAL_CONTROL:
+		PX4_INFO("Handled MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_MANUAL_CONTROL");
 		handle_message_gimbal_manager_set_manual_control(msg);
 		break;
 
 	case MAVLINK_MSG_ID_GIMBAL_DEVICE_INFORMATION:
+		PX4_INFO("Handled MAVLINK_MSG_ID_GIMBAL_DEVICE_INFORMATION");
 		handle_message_gimbal_device_information(msg);
 		break;
 
 	case MAVLINK_MSG_ID_REQUEST_EVENT:
+		PX4_INFO("Handled MAVLINK_MSG_ID_REQUEST_EVENT// ");
 		handle_message_request_event(msg);
 		break;
 
@@ -2101,6 +2149,42 @@ MavlinkReceiver::handle_message_manual_control(mavlink_message_t *msg)
 	manual.data_source = manual_control_setpoint_s::SOURCE_MAVLINK_0 + _mavlink->get_instance_id();
 	manual.timestamp = manual.timestamp_sample = hrt_absolute_time();
 	_manual_control_input_pub.publish(manual);
+
+	if (_param_rc_in_mode == 2) {
+
+		input_rc_s rc{};
+		rc.timestamp = hrt_absolute_time();
+		rc.timestamp_last_signal = rc.timestamp;
+
+		rc.channel_count = 8;
+		rc.rc_failsafe = false;
+		rc.rc_lost = false;
+		rc.rc_lost_frame_count = 0;
+		rc.rc_total_frame_count = 1;
+		rc.rc_ppm_frame_length = 0;
+		rc.input_source = input_rc_s::RC_INPUT_SOURCE_MAVLINK;
+		rc.rssi = 100
+
+		rc.values[0] = man.x / 2 + 1500;
+		rc.values[1] = man.y / 2 + 1500;
+		rc.values[2] = man.z / 2 + 1500;
+		rc.values[3] = math::constrain(man.z / 0.9f + 800.0f, 1000.0f, 2000.0f);
+
+		unsigned max_switch = (sizeof(man.buttons) * 8);
+		unsigned max_channels = (sizeof(rc.values) / sizeof(rc.values[0]));
+
+		if (max_switch > (max_channels - 4)) {
+			max_switch = (max_channels - 4);
+		}
+
+		for (unsigned i = 0; i < max_switch; i++) {
+			rc.values[i + 4] = decode_switch_pos_n(man.buttons, i);
+		}
+
+		_mom_switch_state = man.buttons;
+
+		_rc_pub.publish(rc);
+	}
 }
 
 void
@@ -3479,6 +3563,10 @@ MavlinkReceiver::updateParams()
 {
 	// update parameters from storage
 	ModuleParams::updateParams();
+
+	if (_handle_rc_in_mode != PARAM_INVALID) {
+		param_get(_handle_rc_in_mode, &_param_rc_in_mode);
+	}
 
 	if (_handle_sens_flow_maxhgt != PARAM_INVALID) {
 		param_get(_handle_sens_flow_maxhgt, &_param_sens_flow_maxhgt);

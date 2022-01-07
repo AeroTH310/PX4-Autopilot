@@ -350,6 +350,9 @@ private:
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
+	param_t _handle_rc_in_mode{PARAM_INVALID};
+	int32_t _param_rc_in_mode{0};
+
 	// hil_sensor and hil_state_quaternion
 	enum SensorSource {
 		ACCEL		= 0b111,
