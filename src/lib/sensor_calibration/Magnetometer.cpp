@@ -48,15 +48,19 @@ Magnetometer::Magnetometer()
 	Reset();
 }
 
-Magnetometer::Magnetometer(uint32_t device_id, bool external)
+Magnetometer::Magnetometer(uint32_t device_id)
 {
 	Reset();
-	set_device_id(device_id, external);
+	set_device_id(device_id);
 }
 
-void Magnetometer::set_device_id(uint32_t device_id, bool external)
+void Magnetometer::set_device_id(uint32_t device_id)
 {
+	bool external = DeviceExternal(device_id);
+
 	if (_device_id != device_id || _external != external) {
+		Reset();
+
 		set_external(external);
 		_device_id = device_id;
 

@@ -48,7 +48,6 @@ HMC5883::HMC5883(device::Device *interface, const I2CSPIDriverConfig &config) :
 	_temperature_counter(0),
 	_temperature_error_count(0)
 {
-	_px4_mag.set_external(_interface->external());
 }
 
 HMC5883::~HMC5883()
@@ -367,12 +366,13 @@ int HMC5883::collect()
 	 * to align the sensor axes with the board, x and y need to be flipped
 	 * and y needs to be negated
 	 */
-	if (!_px4_mag.external()) {
-		// convert onboard so it matches offboard for the
-		// scaling below
-		report.y = -report.y;
-		report.x = -report.x;
-	}
+	// TODO: remove this horrible hack
+	// if (!_px4_mag.external()) {
+	// 	// convert onboard so it matches offboard for the
+	// 	// scaling below
+	// 	report.y = -report.y;
+	// 	report.x = -report.x;
+	// }
 
 	/* the standard external mag by 3DR has x pointing to the
 	 * right, y pointing backwards, and z down, therefore switch x
