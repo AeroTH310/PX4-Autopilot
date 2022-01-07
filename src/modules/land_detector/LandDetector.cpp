@@ -230,7 +230,7 @@ void LandDetector::UpdateVehicleAtRest()
 	vehicle_imu_status_s imu_status;
 
 	if (_vehicle_imu_status_sub.update(&imu_status)) {
-		static constexpr float GYRO_VIBE_METRIC_MAX = 0.02f; // gyro_vibration_metric * 4.0e4f > is_moving_scaler) TODO: review
+		static constexpr float GYRO_VIBE_METRIC_MAX = 0.02f; // gyro_vibration_metric * dt * 4.0e4f > is_moving_scaler) TODO: review
 		static constexpr float ACCEL_VIBE_METRIC_MAX = 1.2f; // accel_vibration_metric * dt * 2.1e2f > is_moving_scaler
 
 		if ((imu_status.gyro_vibration_metric > GYRO_VIBE_METRIC_MAX)
