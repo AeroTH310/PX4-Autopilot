@@ -142,14 +142,14 @@ void SimpleLander::detilt_initial_attitude()
 	// p1 = (cd - ab)/sqrt(aa + dd)
 	// p2 = -(ac + bd)/sqrt(aa + dd)
 	// p3 = 0
-	float p[4] = {z[2] + sqrt(z[0]*z[0] + z[1]*z[1] + z[2]*z[2]),
+	float p[4] = {z[2] + (float)sqrt(z[0]*z[0] + z[1]*z[1] + z[2]*z[2]),
 		z[1],
 		-z[0],
 		0.0f};
-	p[0] = p[0]/sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
-	p[1] = p[1]/sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
-	p[2] = p[2]/sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
-	p[3] = p[3]/sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
+	p[0] = p[0]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
+	p[1] = p[1]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
+	p[2] = p[2]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
+	p[3] = p[3]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
 	_internal_states.attitude[0] = p[0];
 	_internal_states.attitude[1] = p[1];
 	_internal_states.attitude[2] = p[2];
