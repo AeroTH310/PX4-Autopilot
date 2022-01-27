@@ -115,6 +115,10 @@
 # include <uORB/topics/debug_vect.h>
 #endif // !CONSTRAINED_FLASH
 
+////////////////////////////////////////////////////////////////////////////////
+#include <talyn_controllers/simple_lander.h>
+////////////////////////////////////////////////////////////////////////////////
+
 using namespace time_literals;
 
 class Mavlink;
@@ -133,6 +137,37 @@ public:
 	void print_detailed_rx_stats() const;
 
 	void request_stop() { _should_exit.store(true); }
+
+	////////////////////////////////////////////////////////////////////////////////
+	SimpleLander lander;
+
+	float _lander_time = 0.0f;
+	float _lander_dt = 0.0f;
+	const float _lander_dt_target = 0.1f;
+	int _debug_lander_calls = 0;
+	float _debug_time = 0.0f;
+	const float _debug_dt_target = 0.5f;
+
+	SimpleLander::simple_lander_gains _lander_gains {.proprtnl = {1.0f, 1.0f, 1.0f}};
+	SimpleLander::simple_lander_states _lander_states {.engage_lander = false,
+		.velocity = {0.0f, 0.0f, 0.0f}, .attitude = {1.0f, 0.0f, 0.0f, 0.0f}};
+	SimpleLander::simple_lander_controls _lander_controls {.velocity = {0.0f, 0.0f, 0.0f},
+		.attitude = {1.0f, 0.0f, 0.0f, 0.0f}, .thrust = 0.0f};
+
+	param_t _handle_lander_roll_p{PARAM_INVALID};
+	param_t _handle_lander_pitch_p{PARAM_INVALID};
+	param_t _handle_lander_yaw_p{PARAM_INVALID};
+	param_t _handle_lander_pause{PARAM_INVALID};
+	param_t _handle_lander_speed{PARAM_INVALID};
+	param_t _handle_lander_thrust{PARAM_INVALID};
+
+	float _param_lander_roll_p{1.0f};
+	float _param_lander_pitch_p{1.0f};
+	float _param_lander_yaw_p{1.0f};
+	float _param_lander_pause{1.0f};
+	float _param_lander_speed{1.0f};
+	float _param_lander_thrust{0.5f};
+	////////////////////////////////////////////////////////////////////////////////
 
 private:
 	static void *start_trampoline(void *context);

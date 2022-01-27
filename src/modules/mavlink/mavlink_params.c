@@ -176,3 +176,17 @@ PARAM_DEFINE_INT32(MAV_ODOM_LP, 0);
  * @max 250
  */
 PARAM_DEFINE_INT32(MAV_RADIO_TOUT, 5);
+
+////////////////////////////////////////////////////////////////////////////////
+PARAM_DEFINE_FLOAT(LANDER_ROLL_P, 1.0f);
+
+PARAM_DEFINE_FLOAT(LANDER_PITCH_P, 1.0f);
+
+PARAM_DEFINE_FLOAT(LANDER_YAW_P, 1.0f);
+
+PARAM_DEFINE_FLOAT(LANDER_PAUSE, 1.0f);
+
+PARAM_DEFINE_FLOAT(LANDER_SPEED, 1.0f);
+
+PARAM_DEFINE_FLOAT(LANDER_THRUST, 0.5f);
+////////////////////////////////////////////////////////////////////////////////

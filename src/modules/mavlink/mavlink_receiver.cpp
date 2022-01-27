@@ -94,6 +94,14 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_handle_sens_flow_maxr = param_find("SENS_FLOW_MAXR");
 	_handle_sens_flow_minhgt = param_find("SENS_FLOW_MINHGT");
 	_handle_sens_flow_rot = param_find("SENS_FLOW_ROT");
+	////////////////////////////////////////////////////////////////////////////////
+	_handle_lander_roll_p = param_find("LANDER_ROLL_P");
+	_handle_lander_pitch_p = param_find("LANDER_PITCH_P");
+	_handle_lander_yaw_p = param_find("LANDER_YAW_P");
+	_handle_lander_pause = param_find("LANDER_PAUSE");
+	_handle_lander_speed = param_find("LANDER_SPEED");
+	_handle_lander_thrust = param_find("LANDER_THRUST");
+	////////////////////////////////////////////////////////////////////////////////
 }
 
 void
@@ -3065,6 +3073,14 @@ MavlinkReceiver::handle_message_gimbal_device_information(mavlink_message_t *msg
 void
 MavlinkReceiver::run()
 {
+	////////////////////////////////////////////////////////////////////////////////
+	lander.set_pause(1.0f);
+	lander.set_land_speed(1.0f);
+	lander.set_hover_throttle(0.5f);
+	lander.set_gains(_lander_gains);
+	PX4_INFO("Lander initialized");
+	////////////////////////////////////////////////////////////////////////////////
+
 	/* set thread name */
 	{
 		char thread_name[17];
@@ -3119,6 +3135,141 @@ MavlinkReceiver::run()
 			// update parameters from storage
 			updateParams();
 		}
+
+		////////////////////////////////////////////////////////////////////////////////
+		//   Update lander parameters
+		_lander_gains.proprtnl[0] = _param_lander_roll_p;
+		_lander_gains.proprtnl[1] = _param_lander_pitch_p;
+		_lander_gains.proprtnl[2] = _param_lander_yaw_p;
+		lander.set_gains(_lander_gains);
+		lander.set_pause(_param_lander_pause);
+		lander.set_land_speed(_param_lander_speed);
+		lander.set_hover_throttle(_param_lander_thrust);
+
+		//   Engage lander when vehicle enters offboard state.  Poll state and update
+		// lander state constantly, also providing lander attitude when engaged.
+		vehicle_status_s vehicle_status{};
+		_vehicle_status_sub.copy(&vehicle_status);
+		vehicle_attitude_s vehicle_att{};
+		_vehicle_attitude_sub.copy(&vehicle_att);
+		_lander_states.attitude[0] = vehicle_att.q[0];
+		_lander_states.attitude[1] = vehicle_att.q[1];
+		_lander_states.attitude[2] = vehicle_att.q[2];
+		_lander_states.attitude[3] = vehicle_att.q[3];
+		if (vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_OFFBOARD) {
+			_lander_states.engage_lander = true;
+		} else {
+			_lander_states.engage_lander = false;
+		}
+		lander.set_states(_lander_states);
+
+		//   Only update lander controller once the desired time step has passed.
+		// Engagement and attitude states will already by present; now update velocity
+		// and run controller.
+		_lander_dt += hrt_absolute_time()/1000000.0f - _lander_time;
+		_lander_time = hrt_absolute_time()/1000000.0f;
+		if (_lander_dt > _lander_dt_target) {
+
+			vehicle_local_position_s local_pos{};
+			_vehicle_local_position_sub.copy(&local_pos);
+
+			//   Update the lander states
+			_lander_states.velocity[0] = local_pos.vx;
+			_lander_states.velocity[1] = local_pos.vy;
+			_lander_states.velocity[2] = local_pos.vz;
+			lander.set_states(_lander_states);
+
+			//   Run the controller
+			lander.update_controller(_lander_dt);
+
+			//   Retrieve the latest control values
+			_lander_controls = lander.get_control();
+
+			//   Fill out the attitude target message structure fields, then encode it as a mavlink message.
+			mavlink_set_attitude_target_t spoof_attitude_target;
+			spoof_attitude_target.target_system = 0;
+			spoof_attitude_target.target_component = 0;
+			spoof_attitude_target.type_mask =
+				  ATTITUDE_TARGET_TYPEMASK_BODY_ROLL_RATE_IGNORE
+				& ATTITUDE_TARGET_TYPEMASK_BODY_PITCH_RATE_IGNORE
+				& ATTITUDE_TARGET_TYPEMASK_BODY_YAW_RATE_IGNORE
+				& ATTITUDE_TARGET_TYPEMASK_THRUST_BODY_SET
+				& ATTITUDE_TARGET_TYPEMASK_THROTTLE_IGNORE;
+			spoof_attitude_target.body_roll_rate = 0.0f;
+			spoof_attitude_target.body_pitch_rate = 0.0f;
+			spoof_attitude_target.body_yaw_rate = 0.0f;
+			spoof_attitude_target.thrust = 0.0f;
+			spoof_attitude_target.q[0] = _lander_controls.attitude[0];
+			spoof_attitude_target.q[1] = _lander_controls.attitude[1];
+			spoof_attitude_target.q[2] = _lander_controls.attitude[2];
+			spoof_attitude_target.q[3] = _lander_controls.attitude[3];
+			spoof_attitude_target.thrust_body[0] = 0.0f;
+			spoof_attitude_target.thrust_body[1] = 0.0f;
+			spoof_attitude_target.thrust_body[2] = -_lander_controls.thrust;
+			mavlink_message_t spoof_msg;
+			mavlink_msg_set_attitude_target_encode(0, 0, &spoof_msg, &spoof_attitude_target);
+
+			//   Put the spoofed MAVLink message into the system every time lander updates;
+			// the system needs an offboard feed at all times in order for offboard mode to
+			// be considered valid and enable transition to offboard mode.  The offboard
+			// mode control message will not be obeyed unless the system has already
+			// transitioned to offboard mode.
+			handle_message(&spoof_msg);
+
+			//   Send out some debug messages.
+			_debug_time += _lander_dt;
+			_debug_lander_calls += 1;
+			if (_debug_time > _debug_dt_target)
+			{
+				SimpleLander::simple_lander_states _internal_states = lander.get_internal_states();
+				SimpleLander::simple_lander_gains _internal_gains = lander.get_gains();
+
+				// PX4_INFO("Lander updated: %d times at %.4f", _debug_lander_calls, (double)_debug_time);
+				PX4_INFO("nav_state=%d | engaged=%s | pause=%1.3f | speed=%1.3f | thrust=%1.3f | debug=%s",
+					vehicle_status.nav_state,
+					_lander_states.engage_lander ? "true" : "false",
+					(double)lander.get_pause(),
+					(double)lander.get_land_speed(),
+					(double)lander.get_hover_throttle(),
+					_internal_states.engage_lander ? "true" : "false");
+				PX4_INFO("proportional gains = < %1.3f, %1.3f, %1.3f >",
+					(double)_internal_gains.proprtnl[0],
+					(double)_internal_gains.proprtnl[1],
+					(double)_internal_gains.proprtnl[2]);
+				PX4_INFO("velocity control = < % 1.3f, % 1.3f, % 1.3f >",
+					(double)_lander_controls.velocity[0],
+					(double)_lander_controls.velocity[1],
+					(double)_lander_controls.velocity[2]);
+				PX4_INFO("velocity state =   < % 1.3f, % 1.3f, % 1.3f >",
+					(double)_lander_states.velocity[0],
+					(double)_lander_states.velocity[1],
+					(double)_lander_states.velocity[2]);
+				PX4_INFO("attitude control = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >    thrust control = %1.3f",
+					(double)_lander_controls.attitude[0],
+					(double)_lander_controls.attitude[1],
+					(double)_lander_controls.attitude[2],
+					(double)_lander_controls.attitude[3],
+					(double)_lander_controls.thrust);
+				PX4_INFO("attitude state =   < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
+					(double)_lander_states.attitude[0],
+					(double)_lander_states.attitude[1],
+					(double)_lander_states.attitude[2],
+					(double)_lander_states.attitude[3]);
+				PX4_INFO("detilt quat = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
+					(double)_internal_states.attitude[0],
+					(double)_internal_states.attitude[1],
+					(double)_internal_states.attitude[2],
+					(double)_internal_states.attitude[3]);
+				PX4_INFO("test        = < % 1.3f, % 1.3f, % 1.3f >",
+					(double)_internal_states.velocity[0],
+					(double)_internal_states.velocity[1],
+					(double)_internal_states.velocity[2]);
+				_debug_time = 0.0f;
+				_debug_lander_calls = 0;
+			}
+			_lander_dt = 0.0f;
+		}
+		////////////////////////////////////////////////////////////////////////////////
 
 		int ret = poll(&fds[0], 1, timeout);
 
@@ -3495,6 +3646,32 @@ MavlinkReceiver::updateParams()
 	if (_handle_sens_flow_rot != PARAM_INVALID) {
 		param_get(_handle_sens_flow_rot, &_param_sens_flow_rot);
 	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	if (_handle_lander_roll_p != PARAM_INVALID) {
+		param_get(_handle_lander_roll_p, &_param_lander_roll_p);
+	}
+
+	if (_handle_lander_pitch_p != PARAM_INVALID) {
+		param_get(_handle_lander_pitch_p, &_param_lander_pitch_p);
+	}
+
+	if (_handle_lander_yaw_p != PARAM_INVALID) {
+		param_get(_handle_lander_yaw_p, &_param_lander_yaw_p);
+	}
+
+	if (_handle_lander_pause != PARAM_INVALID) {
+		param_get(_handle_lander_pause, &_param_lander_pause);
+	}
+
+	if (_handle_lander_speed != PARAM_INVALID) {
+		param_get(_handle_lander_speed, &_param_lander_speed);
+	}
+
+	if (_handle_lander_thrust != PARAM_INVALID) {
+		param_get(_handle_lander_thrust, &_param_lander_thrust);
+	}
+	////////////////////////////////////////////////////////////////////////////////
 }
 
 void *MavlinkReceiver::start_trampoline(void *context)

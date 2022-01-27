@@ -1,0 +1,1 @@
+px4_add_library(simple_lander simple_lander.cpp)

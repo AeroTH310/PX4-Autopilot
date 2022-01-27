@@ -110,6 +110,7 @@ px4_add_module(
 		mavlink_c
 		tunes
 		version
+		simple_lander
 	UNITY_BUILD
 	)
 
