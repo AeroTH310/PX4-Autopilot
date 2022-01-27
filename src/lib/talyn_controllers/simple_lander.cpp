@@ -142,22 +142,14 @@ void SimpleLander::detilt_initial_attitude()
 	// p1 = (cd - ab)/sqrt(aa + dd)
 	// p2 = -(ac + bd)/sqrt(aa + dd)
 	// p3 = 0
-	float p[4] = {z[2] + (float)sqrt(z[0]*z[0] + z[1]*z[1] + z[2]*z[2]),
-		z[1],
-		-z[0],
+	float p[4] = {sqrtf(q[0]*q[0] + q[3]*q[3]),
+		(q[2]*q[3] - q[0]*q[1])/sqrtf(q[0]*q[0] + q[3]*q[3]),
+		-(q[0]*q[2] + q[1]*q[3])/sqrtf(q[0]*q[0] + q[3]*q[3]),
 		0.0f};
-	p[0] = p[0]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
-	p[1] = p[1]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
-	p[2] = p[2]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
-	p[3] = p[3]/(float)sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2] + p[3]*p[3]);
 	_internal_states.attitude[0] = p[0];
 	_internal_states.attitude[1] = p[1];
 	_internal_states.attitude[2] = p[2];
 	_internal_states.attitude[3] = p[3];
-
-	_internal_states.velocity[0] = sqrt(q[0]*q[0] + q[3]*q[3]);
-	_internal_states.velocity[1] = (q[2]*q[3] - q[0]*q[1])/_internal_states.velocity[0];
-	_internal_states.velocity[2] = -(q[0]*q[2] + q[1]*q[3])/_internal_states.velocity[0];
 
 	//   The attitude after the body z axis has rotated parallel to the world z axis
 	// is quaternion < r0, r1, r2, r3 >:
@@ -173,6 +165,10 @@ void SimpleLander::detilt_initial_attitude()
 	// r3 = p3*a - p2*b + p1*c + p0*d
 	//    = (2*abc + 2*bbd) + (2*ccd - 2*abc) + (2*aad + 2*ddd)
 	//    = 2*aad + 2*bbd + 2*ccd + 2*ddd
+	_internal_states.velocity[0] = sqrtf(q[0]*q[0] + q[3]*q[3]);
+	_internal_states.velocity[1] = 0.5f*z[1]/sqrtf(q[0]*q[0] + q[3]*q[3]);
+	_internal_states.velocity[2] = -0.5f*z[0]/sqrtf(q[0]*q[0] + q[3]*q[3]);
+
 
 	// Need to handle corner case where body z axis is very close to opposite of
 	// world z axis (vehicle inverted).
