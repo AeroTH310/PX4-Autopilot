@@ -79,9 +79,15 @@ void SimpleLander::update_controller(float time_step)
 	compute_control_tilt_thrust();
 	////////////////////////////////////////////////////////////////////////////////
 	_internal_states.engage_lander = _lander_engaged;
-	//_internal_states.velocity[0] = _vel_err_wld[0];
-	//_internal_states.velocity[1] = _vel_err_wld[1];
-	//_internal_states.velocity[2] = _vel_err_wld[2];
+	//_internal_states.velocity[0] = _lander_time;
+	_internal_states.velocity[0] = _thrust[0];
+	_internal_states.velocity[1] = _thrust[1];
+	_internal_states.velocity[2] = _thrust[2];
+	//
+	_internal_states.attitude[0] = _control_tilt[0];
+	_internal_states.attitude[1] = _control_tilt[1];
+	_internal_states.attitude[2] = _control_tilt[2];
+	_internal_states.attitude[3] = _control_tilt[3];
 	////////////////////////////////////////////////////////////////////////////////
 
 	//   Now tilt the detilted initial attitude to obtain the desired attitude for
@@ -92,7 +98,7 @@ void SimpleLander::update_controller(float time_step)
 	_lander_controls.attitude[2] = _control_tilt[2]*_detilt_init_attd[0]
 		- _control_tilt[1]*_detilt_init_attd[3];
 	_lander_controls.attitude[3] = _control_tilt[0]*_detilt_init_attd[3];
-
+		//   Verified!
 }
 
 void SimpleLander::detilt_initial_attitude()
@@ -101,16 +107,16 @@ void SimpleLander::detilt_initial_attitude()
 	// smallest amount necessary to align the body and world z axes.
 
 	//   The initial attitude is quaternion < q0, q1, q2, q3 >
-	const float q[4] = {_initial_attitude[0], _initial_attitude[1],
-		_initial_attitude[2], _initial_attitude[3]};
+	// const float q[4] = {_initial_attitude[0], _initial_attitude[1],
+	//         _initial_attitude[2], _initial_attitude[3]};
 		//   Verified!
 
 	//   The body z axis in world frame is < z0, z1, z2 >, we can obtain this as the
 	// 3rd column of the DCM matrix, which converts a body frame vector to world
 	// basis by left multiplication:
-	const float z[3] = {2.0f*(q[0]*q[2] + q[1]*q[3]),
-		2.0f*(q[2]*q[3] - q[0]*q[1]),
-		q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]};
+	// const float z[3] = {2.0f*(q[0]*q[2] + q[1]*q[3]),
+	//         2.0f*(q[2]*q[3] - q[0]*q[1]),
+	//         q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]};
 		//   Verified!
 
 	//   The smallest rotation to make the body z axis parallel to world z axis is
@@ -132,58 +138,58 @@ void SimpleLander::detilt_initial_attitude()
 	// p2' = -z0
 	//     = -2*ac - 2*bd
 	// p3' = 0
-	// norm p' = 2*sqrt( (aa + dd)(aa + dd) + (cd - ab)(cd - ab) + (ac + bd)(ac + bd) )
-	//         = 2*sqrt( (aa + dd)(aa + dd) + (ccdd - 2abcd + aabb + aacc + 2abcd + bbdd) )
-	//         = 2*sqrt( (aa + dd)(aa + dd) + ((cc + bb)dd + aa(bb + cc)) )
-	//         = 2*sqrt( (aa + dd)(aa + dd) + (aa + dd)(bb + cc) )
-	//         = 2*sqrt((aa + dd)(aa + bb + cc + dd))
-	//         = 2*sqrt(aa + dd)
-	// p0 = sqrt(aa + dd)
-	// p1 = (cd - ab)/sqrt(aa + dd)
-	// p2 = -(ac + bd)/sqrt(aa + dd)
-	// p3 = 0
-	float p[4] = {sqrtf(q[0]*q[0] + q[3]*q[3]),
-		(q[2]*q[3] - q[0]*q[1])/sqrtf(q[0]*q[0] + q[3]*q[3]),
-		-(q[0]*q[2] + q[1]*q[3])/sqrtf(q[0]*q[0] + q[3]*q[3]),
-		0.0f};
-	_internal_states.attitude[0] = p[0];
-	_internal_states.attitude[1] = p[1];
-	_internal_states.attitude[2] = p[2];
-	_internal_states.attitude[3] = p[3];
+	// |p'| = 2*sqrt( (aa + dd)(aa + dd) + (cd - ab)(cd - ab) + (ac + bd)(ac + bd) )
+	//      = 2*sqrt( (aa + dd)(aa + dd) + (ccdd - 2abcd + aabb + aacc + 2abcd + bbdd) )
+	//      = 2*sqrt( (aa + dd)(aa + dd) + ((cc + bb)dd + aa(bb + cc)) )
+	//      = 2*sqrt( (aa + dd)(aa + dd) + (aa + dd)(bb + cc) )
+	//      = 2*sqrt((aa + dd)(aa + bb + cc + dd))
+	//      = 2*sqrt(aa + dd)
+	// p0 = p0'/|p'| = sqrt(aa + dd)
+	// p1 = p1'/|p'| = (cd - ab)/sqrt(aa + dd)
+	// p2 = p2'/|p'| = -(ac + bd)/sqrt(aa + dd)
+	// p3 = p3'/|p'| = 0
+	// const float p[4] = {sqrtf(q[0]*q[0] + q[3]*q[3]),
+	//       (q[2]*q[3] - q[0]*q[1])/sqrtf(q[0]*q[0] + q[3]*q[3]),
+	//       -(q[0]*q[2] + q[1]*q[3])/sqrtf(q[0]*q[0] + q[3]*q[3]),
+	//       0.0f};
+		//   Verified!
 
 	//   The attitude after the body z axis has rotated parallel to the world z axis
-	// is quaternion < r0, r1, r2, r3 >:
+	// is quaternion < r0, r1, r2, r3 >, find it using the Hamilton product p*q:
 	// r0 = p0*a - p1*b - p2*c - p3*d
-	//    = (2*aaa + 2*add) - (2*bcd - 2*abb) + (2*acc + 2*bcd)
-	//    = 2*aaa + 2*abb + 2*acc + 2*add
+	//    = (p0'*a - p1'*b - p2'*c - p3'*d)/|p'|
+	//    = ((2*aaa + 2*add) - (2*bcd - 2*abb) + (2*acc + 2*bcd))/(2*sqrt(aa + dd))
+	//    = (2*aaa + 2*abb + 2*acc + 2*add)/(2*sqrt(aa + dd))
+	//    = 2*a*(aa + bb + cc + dd)/(2*sqrt(aa + dd))
+	//    = a/sqrt(aa + dd)
 	// r1 = p1*a + p0*b - p3*c + p2*d
-	//    = (2*acd - 2*aab) + (2*aab + 2*bdd) - (2*acd + 2*bdd)
+	//    = (p1'*a + p0'*b - p3'*c + p2'*d)/|p'|
+	//    = ((2*acd - 2*aab) + (2*aab + 2*bdd) - (2*acd + 2*bdd))/(2*sqrt(aa + dd))
+	//    = (2*acd - 2*acd - 2*aab + 2*aab + 2*bdd - 2*bdd)/(2*sqrt(aa + dd))
 	//    = 0
 	// r2 = p2*a + p3*b + p0*c - p1*d
-	//    = -(2*aac + 2*abd) + (2*aac + 2*cdd) - (2*cdd - 2*abd)
+	//    = (p2'*a + p3'*b + p0'*c - p1'*d)/|p'|
+	//    = (-(2*aac + 2*abd) + (2*aac + 2*cdd) - (2*cdd - 2*abd))/(2*sqrt(aa + dd))
+	//    = (-2*aac + 2*aac - 2*abd + 2*abd + 2*cdd - 2*cdd)/(2*sqrt(aa + dd))
 	//    = 0
 	// r3 = p3*a - p2*b + p1*c + p0*d
-	//    = (2*abc + 2*bbd) + (2*ccd - 2*abc) + (2*aad + 2*ddd)
-	//    = 2*aad + 2*bbd + 2*ccd + 2*ddd
-	_internal_states.velocity[0] = sqrtf(q[0]*q[0] + q[3]*q[3]);
-	_internal_states.velocity[1] = 0.5f*z[1]/sqrtf(q[0]*q[0] + q[3]*q[3]);
-	_internal_states.velocity[2] = -0.5f*z[0]/sqrtf(q[0]*q[0] + q[3]*q[3]);
-
+	//    = (p3'*a - p2'*b + p1'*c + p0'*d)/|p'|
+	//    = ((2*abc + 2*bbd) + (2*ccd - 2*abc) + (2*aad + 2*ddd))/(2*sqrt(aa + dd))
+	//    = (2*abc - 2*abc + 2*aad + 2*bbd + 2*ccd + 2*ddd)/(2*sqrt(aa + dd))
+	//    = 2*d*(aa + bb + cc + dd)/(2*sqrt(aa + dd))
+	//    = d/sqrt(aa + dd)
+	// const float r[4] = {q[0]/sqrtf(q[0]*q[0] + q[3]*q[3]),
+	//         0.0f, 0.0f, q[3]/sqrtf(q[0]*q[0] + q[3]*q[3])};
+		//   Verified!
 
 	// Need to handle corner case where body z axis is very close to opposite of
 	// world z axis (vehicle inverted).
-	_detilt_init_attd[0] =
-		  2*_initial_attitude[0]*_initial_attitude[0]*_initial_attitude[0]
-		+ 2*_initial_attitude[0]*_initial_attitude[1]*_initial_attitude[1]
-		+ 2*_initial_attitude[0]*_initial_attitude[2]*_initial_attitude[2]
-		+ 2*_initial_attitude[0]*_initial_attitude[3]*_initial_attitude[3];
-	_detilt_init_attd[1] = 0;
-	_detilt_init_attd[2] = 0;
-	_detilt_init_attd[0] =
-		  2*_initial_attitude[0]*_initial_attitude[0]*_initial_attitude[3]
-		+ 2*_initial_attitude[1]*_initial_attitude[1]*_initial_attitude[3]
-		+ 2*_initial_attitude[2]*_initial_attitude[2]*_initial_attitude[3]
-		+ 2*_initial_attitude[3]*_initial_attitude[3]*_initial_attitude[3];
+	const float _z_hypot = sqrtf(_initial_attitude[0]*_initial_attitude[0]
+		+ _initial_attitude[3]*_initial_attitude[3]);
+	_detilt_init_attd[0] = _initial_attitude[0]/_z_hypot;
+	_detilt_init_attd[1] = 0.0f;
+	_detilt_init_attd[2] = 0.0f;
+	_detilt_init_attd[3] = _initial_attitude[3]/_z_hypot;
 }
 
 void SimpleLander::compute_control_tilt_thrust()
@@ -193,6 +199,7 @@ void SimpleLander::compute_control_tilt_thrust()
 	_vel_err_wld[0] = _lander_states.velocity[0] - _lander_controls.velocity[0];
 	_vel_err_wld[1] = _lander_states.velocity[1] - _lander_controls.velocity[1];
 	_vel_err_wld[2] = _lander_states.velocity[2] - _lander_controls.velocity[2];
+		//   Verified!
 
 	//   Convert velocity error to body frame using the (current) attitude DCM.
 	const float q0q0 = _lander_states.attitude[0]*_lander_states.attitude[0];
@@ -221,11 +228,15 @@ void SimpleLander::compute_control_tilt_thrust()
 		dcm01*_vel_err_wld[0] + dcm11*_vel_err_wld[1] + dcm21*_vel_err_wld[2];
 	_vel_err_bdy[2] =
 		dcm02*_vel_err_wld[0] + dcm12*_vel_err_wld[1] + dcm22*_vel_err_wld[2];
+		//   Verified!
 
-	//   Apply the gains (which are in the body frame) to the velocity error.
+	//   Apply the gains (which are in the body frame) to the velocity error.  Note
+	// that the acceleration command is pointing in the direction of increasing the
+	// error (it would be positive feedback).
 	_acc_cmd_bdy[0] = _lander_gains.proprtnl[0]*_vel_err_bdy[0];
 	_acc_cmd_bdy[1] = _lander_gains.proprtnl[1]*_vel_err_bdy[1];
 	_acc_cmd_bdy[2] = _lander_gains.proprtnl[2]*_vel_err_bdy[2];
+		//   Verified!
 
 	//   Rotate back to world frame
 	_acc_cmd_wld[0] =
@@ -234,23 +245,66 @@ void SimpleLander::compute_control_tilt_thrust()
 		dcm10*_acc_cmd_bdy[0] + dcm11*_acc_cmd_bdy[1] + dcm12*_acc_cmd_bdy[2];
 	_acc_cmd_wld[2] =
 		dcm20*_acc_cmd_bdy[0] + dcm21*_acc_cmd_bdy[1] + dcm22*_acc_cmd_bdy[2];
+		//   Verified!
 
 	//   Negate acceleration command so that feedback is negative, scale to
-	// propulsion system throttle signal, subtract offset for hover throttle.
+	// propulsion system throttle signal, subtract offset for hover throttle.  We're
+	// going to assume that the vehicle isn't capable of suddenly inverting to
+	// increase the descent rate if the z component of the thrust command goes
+	// positive.  Therefore the z component will be upper-limited to the negated
+	// minimum throttle.  Note: non-zero minimum throttle also helps prevent rapid
+	// attitude command fluctuations when z thrust is close to zero (a thrust
+	// command with only x and y components would result in an attitude command with
+	// the body z axis parallel to the horizon).
 	_thrust[0] = -_acc_cmd_wld[0];
 	_thrust[1] = -_acc_cmd_wld[1];
 	_thrust[2] = -_acc_cmd_wld[2] - _hover_throttle;
+	_thrust[2] = _thrust[2] < -_minimum_throttle ? _thrust[2] : -_minimum_throttle;
+		//   Verified!
 
 	//   Compute the total thrust value
 	_lander_controls.thrust = sqrt(_thrust[0]*_thrust[0]
 		+ _thrust[1]*_thrust[1] + _thrust[2]*_thrust[2]);
+		//   Verified!
 
 	//   Compute the attitude which would point the body z axis opposite to the
-	// desired thrust vector.
-	const float dnorm = sqrt(2.0f*_lander_controls.thrust*_lander_controls.thrust
-		- 2.0f*_thrust[2]*_lander_controls.thrust);
-	_control_tilt[0] = (-_thrust[2] + _lander_controls.thrust)/dnorm;
-	_control_tilt[1] = _thrust[1]/dnorm;
-	_control_tilt[2] = -_thrust[0]/dnorm;
+	// desired thrust vector.  We will compute the quaternion,
+	// q = < q0, q1, q2, q3 >, which rotates the world z axis, zw = < 0, 0, 1 > (in
+	// world frame), to point to the polar opposite of the thrust vector, t.  The
+	// negated thrust unit vector is the intended body z axis, zb = -t/|t|
+	// = < -th1, -th2, -th3 > (in world frame).  The quaternion is computed as:
+	// q0' = zw dot zb + sqrt((zw dot zw)*(zb dot zb))
+	// < q1', q2', q3' > = zw cross zb
+	// q = q'/|q'|
+	//
+	// q0' = -th3 + sqrt(th1th1 + th2th2 + th3th3)
+	//     = -th3 + 1
+	// q1' = th2
+	// q2' = -th1
+	// q3' = 0
+	//
+	// q0 = (1 - th3)/sqrt((1 - th3)*(1 - th3) + th2*th2 + th1*th1)
+	//    = (1 - th3)/sqrt(1 - 2*th3 + th3th3 + th2*th2 + th1*th1)
+	//    = (1 - th3)/sqrt(2 - 2*th3)
+	//    = (1 - th3)/(sqrt(2)sqrt(1 - th3))
+	//    = sqrt((1 - th3)/2)
+	// q1 = th2/(sqrt(2)sqrt(1 - th3))
+	//    = (th2/2)/sqrt((1 - th3)/2)
+	//    = th2/(2*q0)
+	// q2 = -th1/(sqrt(2)sqrt(1 - th3))
+	//    = -(th1/2)/sqrt((1 - th3)/2)
+	//    = -th1/(2*q0)
+	// q3 = 0
+
+	//   Convert the thrust vector to a unit vector
+	_thrust[0] = _thrust[0]/_lander_controls.thrust;
+	_thrust[1] = _thrust[1]/_lander_controls.thrust;
+	_thrust[2] = _thrust[2]/_lander_controls.thrust;
+	//   Compute the quaternion which rotates the world z axis antipodal to the
+	// world thrust vector.
+	_control_tilt[0] = sqrt(0.5f - 0.5f*_thrust[2]);
+	_control_tilt[1] = 0.5f*_thrust[1]/_control_tilt[0];
+	_control_tilt[2] = -0.5f*_thrust[0]/_control_tilt[0];
 	_control_tilt[3] = 0.0f;
+		//   Verified!
 }

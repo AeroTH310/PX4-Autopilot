@@ -146,7 +146,7 @@ public:
 	const float _lander_dt_target = 0.1f;
 	int _debug_lander_calls = 0;
 	float _debug_time = 0.0f;
-	const float _debug_dt_target = 0.5f;
+	const float _debug_dt_target = 0.1f;
 
 	SimpleLander::simple_lander_gains _lander_gains {.proprtnl = {1.0f, 1.0f, 1.0f}};
 	SimpleLander::simple_lander_states _lander_states {.engage_lander = false,
@@ -154,19 +154,21 @@ public:
 	SimpleLander::simple_lander_controls _lander_controls {.velocity = {0.0f, 0.0f, 0.0f},
 		.attitude = {1.0f, 0.0f, 0.0f, 0.0f}, .thrust = 0.0f};
 
-	param_t _handle_lander_roll_p{PARAM_INVALID};
-	param_t _handle_lander_pitch_p{PARAM_INVALID};
-	param_t _handle_lander_yaw_p{PARAM_INVALID};
+	param_t _handle_lander_x_p{PARAM_INVALID};
+	param_t _handle_lander_y_p{PARAM_INVALID};
+	param_t _handle_lander_z_p{PARAM_INVALID};
 	param_t _handle_lander_pause{PARAM_INVALID};
 	param_t _handle_lander_speed{PARAM_INVALID};
-	param_t _handle_lander_thrust{PARAM_INVALID};
+	param_t _handle_lander_hov_thrust{PARAM_INVALID};
+	param_t _handle_lander_min_thrust{PARAM_INVALID};
 
-	float _param_lander_roll_p{1.0f};
-	float _param_lander_pitch_p{1.0f};
-	float _param_lander_yaw_p{1.0f};
+	float _param_lander_x_p{1.0f};
+	float _param_lander_y_p{1.0f};
+	float _param_lander_z_p{1.0f};
 	float _param_lander_pause{1.0f};
 	float _param_lander_speed{1.0f};
-	float _param_lander_thrust{0.5f};
+	float _param_lander_hov_thrust{0.5f};
+	float _param_lander_min_thrust{0.1f};
 	////////////////////////////////////////////////////////////////////////////////
 
 private:

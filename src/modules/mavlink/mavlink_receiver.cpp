@@ -95,12 +95,13 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_handle_sens_flow_minhgt = param_find("SENS_FLOW_MINHGT");
 	_handle_sens_flow_rot = param_find("SENS_FLOW_ROT");
 	////////////////////////////////////////////////////////////////////////////////
-	_handle_lander_roll_p = param_find("LANDER_ROLL_P");
-	_handle_lander_pitch_p = param_find("LANDER_PITCH_P");
-	_handle_lander_yaw_p = param_find("LANDER_YAW_P");
+	_handle_lander_x_p = param_find("LANDER_X_P");
+	_handle_lander_y_p = param_find("LANDER_Y_P");
+	_handle_lander_z_p = param_find("LANDER_Z_P");
 	_handle_lander_pause = param_find("LANDER_PAUSE");
 	_handle_lander_speed = param_find("LANDER_SPEED");
-	_handle_lander_thrust = param_find("LANDER_THRUST");
+	_handle_lander_hov_thrust = param_find("LANDER_HOV_THR");
+	_handle_lander_min_thrust = param_find("LANDER_MIN_THR");
 	////////////////////////////////////////////////////////////////////////////////
 }
 
@@ -3073,14 +3074,6 @@ MavlinkReceiver::handle_message_gimbal_device_information(mavlink_message_t *msg
 void
 MavlinkReceiver::run()
 {
-	////////////////////////////////////////////////////////////////////////////////
-	lander.set_pause(1.0f);
-	lander.set_land_speed(1.0f);
-	lander.set_hover_throttle(0.5f);
-	lander.set_gains(_lander_gains);
-	PX4_INFO("Lander initialized");
-	////////////////////////////////////////////////////////////////////////////////
-
 	/* set thread name */
 	{
 		char thread_name[17];
@@ -3138,13 +3131,14 @@ MavlinkReceiver::run()
 
 		////////////////////////////////////////////////////////////////////////////////
 		//   Update lander parameters
-		_lander_gains.proprtnl[0] = _param_lander_roll_p;
-		_lander_gains.proprtnl[1] = _param_lander_pitch_p;
-		_lander_gains.proprtnl[2] = _param_lander_yaw_p;
+		_lander_gains.proprtnl[0] = _param_lander_x_p;
+		_lander_gains.proprtnl[1] = _param_lander_y_p;
+		_lander_gains.proprtnl[2] = _param_lander_z_p;
 		lander.set_gains(_lander_gains);
 		lander.set_pause(_param_lander_pause);
 		lander.set_land_speed(_param_lander_speed);
-		lander.set_hover_throttle(_param_lander_thrust);
+		lander.set_hover_throttle(_param_lander_hov_thrust);
+		lander.set_minimum_throttle(_param_lander_min_thrust);
 
 		//   Engage lander when vehicle enters offboard state.  Poll state and update
 		// lander state constantly, also providing lander attitude when engaged.
@@ -3244,26 +3238,26 @@ MavlinkReceiver::run()
 					(double)_lander_states.velocity[0],
 					(double)_lander_states.velocity[1],
 					(double)_lander_states.velocity[2]);
-				PX4_INFO("attitude control = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >    thrust control = %1.3f",
+				PX4_INFO("attitude control = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
 					(double)_lander_controls.attitude[0],
 					(double)_lander_controls.attitude[1],
 					(double)_lander_controls.attitude[2],
-					(double)_lander_controls.attitude[3],
-					(double)_lander_controls.thrust);
+					(double)_lander_controls.attitude[3]);
 				PX4_INFO("attitude state =   < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
 					(double)_lander_states.attitude[0],
 					(double)_lander_states.attitude[1],
 					(double)_lander_states.attitude[2],
 					(double)_lander_states.attitude[3]);
-				PX4_INFO("detilt quat = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
+				PX4_INFO("thrust vectr = < % 1.3f, % 1.3f, % 1.3f > | thrust = %1.3f",
+					(double)_internal_states.velocity[0],
+					(double)_internal_states.velocity[1],
+					(double)_internal_states.velocity[2],
+					(double)_lander_controls.thrust);
+				PX4_INFO("control tilt = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
 					(double)_internal_states.attitude[0],
 					(double)_internal_states.attitude[1],
 					(double)_internal_states.attitude[2],
 					(double)_internal_states.attitude[3]);
-				PX4_INFO("test        = < % 1.3f, % 1.3f, % 1.3f >",
-					(double)_internal_states.velocity[0],
-					(double)_internal_states.velocity[1],
-					(double)_internal_states.velocity[2]);
 				_debug_time = 0.0f;
 				_debug_lander_calls = 0;
 			}
@@ -3648,16 +3642,16 @@ MavlinkReceiver::updateParams()
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	if (_handle_lander_roll_p != PARAM_INVALID) {
-		param_get(_handle_lander_roll_p, &_param_lander_roll_p);
+	if (_handle_lander_x_p != PARAM_INVALID) {
+		param_get(_handle_lander_x_p, &_param_lander_x_p);
 	}
 
-	if (_handle_lander_pitch_p != PARAM_INVALID) {
-		param_get(_handle_lander_pitch_p, &_param_lander_pitch_p);
+	if (_handle_lander_y_p != PARAM_INVALID) {
+		param_get(_handle_lander_y_p, &_param_lander_y_p);
 	}
 
-	if (_handle_lander_yaw_p != PARAM_INVALID) {
-		param_get(_handle_lander_yaw_p, &_param_lander_yaw_p);
+	if (_handle_lander_z_p != PARAM_INVALID) {
+		param_get(_handle_lander_z_p, &_param_lander_z_p);
 	}
 
 	if (_handle_lander_pause != PARAM_INVALID) {
@@ -3668,8 +3662,12 @@ MavlinkReceiver::updateParams()
 		param_get(_handle_lander_speed, &_param_lander_speed);
 	}
 
-	if (_handle_lander_thrust != PARAM_INVALID) {
-		param_get(_handle_lander_thrust, &_param_lander_thrust);
+	if (_handle_lander_hov_thrust != PARAM_INVALID) {
+		param_get(_handle_lander_hov_thrust, &_param_lander_hov_thrust);
+	}
+
+	if (_handle_lander_min_thrust != PARAM_INVALID) {
+		param_get(_handle_lander_min_thrust, &_param_lander_min_thrust);
 	}
 	////////////////////////////////////////////////////////////////////////////////
 }

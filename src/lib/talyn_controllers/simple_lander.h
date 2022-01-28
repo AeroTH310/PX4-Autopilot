@@ -25,6 +25,9 @@ public:
 	void set_hover_throttle(float throttle){ _hover_throttle = throttle; };
 	float get_hover_throttle(){ return _hover_throttle; };
 
+	void set_minimum_throttle(float throttle){ _minimum_throttle = throttle; };
+	float get_minimum_throttle(){ return _minimum_throttle; };
+
 	struct simple_lander_states
 	{
 		bool engage_lander;
@@ -80,6 +83,7 @@ private:
 
 	float _thrust[3] = {0.0f, 0.0f, 0.0f};
 	float _hover_throttle = 0.5f;
+	float _minimum_throttle = 0.1f;
 	float _control_tilt[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 
 	simple_lander_states _lander_states {.engage_lander = false,
