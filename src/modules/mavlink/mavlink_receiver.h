@@ -144,9 +144,6 @@ public:
 	float _lander_time = 0.0f;
 	float _lander_dt = 0.0f;
 	const float _lander_dt_target = 0.1f;
-	int _debug_lander_calls = 0;
-	float _debug_time = 0.0f;
-	const float _debug_dt_target = 0.1f;
 
 	SimpleLander::simple_lander_gains _lander_gains {.proprtnl = {1.0f, 1.0f, 1.0f}};
 	SimpleLander::simple_lander_states _lander_states {.engage_lander = false,
@@ -162,17 +159,13 @@ public:
 	param_t _handle_lander_hov_thrust{PARAM_INVALID};
 	param_t _handle_lander_min_thrust{PARAM_INVALID};
 
-	float _param_lander_x_p{1.0f};
-	float _param_lander_y_p{1.0f};
-	float _param_lander_z_p{1.0f};
-	float _param_lander_pause{1.0f};
+	float _param_lander_x_p{0.1f};
+	float _param_lander_y_p{0.1f};
+	float _param_lander_z_p{0.1f};
+	float _param_lander_pause{0.0f};
 	float _param_lander_speed{1.0f};
 	float _param_lander_hov_thrust{0.5f};
 	float _param_lander_min_thrust{0.1f};
-
-	uORB::Subscription	_vehicle_attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
-	uORB::Subscription	_mc_virtual_att_sp_sub{ORB_ID(mc_virtual_attitude_setpoint)};
-	uORB::Subscription	_fw_virtual_att_sp_sub{ORB_ID(fw_virtual_attitude_setpoint)};
 	////////////////////////////////////////////////////////////////////////////////
 
 private:
