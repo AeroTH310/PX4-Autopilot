@@ -89,8 +89,8 @@ private:
 	simple_lander_states _lander_states {.engage_lander = false,
 		.velocity = {0.0f, 0.0f, 0.0f,}, .attitude = {1.0f, 0.0f, 0.0f, 0.0f}};
 
-	simple_lander_controls _lander_controls {.attitude = {1.0f, 0.0f, 0.0f, 0.0f,},
-		.thrust = 0.0f};
+	simple_lander_controls _lander_controls {.velocity = {0.0f, 0.0f, 0.0f},
+		.attitude = {1.0f, 0.0f, 0.0f, 0.0f,}, .thrust = 0.0f};
 
-	simple_lander_gains _lander_gains {.proprtnl = {1.0f, 1.0f, 1.0f}};
+	simple_lander_gains _lander_gains {.proprtnl = {0.1f, 0.1f, 0.1f}};
 };

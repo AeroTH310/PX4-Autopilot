@@ -169,6 +169,10 @@ public:
 	float _param_lander_speed{1.0f};
 	float _param_lander_hov_thrust{0.5f};
 	float _param_lander_min_thrust{0.1f};
+
+	uORB::Subscription	_vehicle_attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::Subscription	_mc_virtual_att_sp_sub{ORB_ID(mc_virtual_attitude_setpoint)};
+	uORB::Subscription	_fw_virtual_att_sp_sub{ORB_ID(fw_virtual_attitude_setpoint)};
 	////////////////////////////////////////////////////////////////////////////////
 
 private:
