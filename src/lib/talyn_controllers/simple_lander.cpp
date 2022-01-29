@@ -36,12 +36,6 @@ void SimpleLander::update_controller(float time_step)
 		// input is required to maintain landing zone; the controller will not attempt to
 		// change heading from here.
 		detilt_initial_attitude();
-		////////////////////////////////////////////////////////////////////////////////
-		//_internal_states.attitude[0] = _detilt_init_attd[0];
-		//_internal_states.attitude[1] = _detilt_init_attd[1];
-		//_internal_states.attitude[2] = _detilt_init_attd[2];
-		//_internal_states.attitude[3] = _detilt_init_attd[3];
-		////////////////////////////////////////////////////////////////////////////////
 
 	//   Lander will compute signals to hold aircraft still if it is pausing.
 	// Lander will maintain a constant downward velocity with a magnitude of
@@ -77,18 +71,6 @@ void SimpleLander::update_controller(float time_step)
 	// velocity error, normalize, feedforward a throttle value for hover, and split
 	// into magnitude and direction parts.
 	compute_control_tilt_thrust();
-	////////////////////////////////////////////////////////////////////////////////
-	_internal_states.engage_lander = _lander_engaged;
-	//_internal_states.velocity[0] = _lander_time;
-	_internal_states.velocity[0] = _thrust[0];
-	_internal_states.velocity[1] = _thrust[1];
-	_internal_states.velocity[2] = _thrust[2];
-	//
-	_internal_states.attitude[0] = _control_tilt[0];
-	_internal_states.attitude[1] = _control_tilt[1];
-	_internal_states.attitude[2] = _control_tilt[2];
-	_internal_states.attitude[3] = _control_tilt[3];
-	////////////////////////////////////////////////////////////////////////////////
 
 	//   Now tilt the detilted initial attitude to obtain the desired attitude for
 	// control purposes.
@@ -98,7 +80,6 @@ void SimpleLander::update_controller(float time_step)
 	_lander_controls.attitude[2] = _control_tilt[2]*_detilt_init_attd[0]
 		- _control_tilt[1]*_detilt_init_attd[3];
 	_lander_controls.attitude[3] = _control_tilt[0]*_detilt_init_attd[3];
-		//   Verified!
 }
 
 void SimpleLander::detilt_initial_attitude()
@@ -109,7 +90,6 @@ void SimpleLander::detilt_initial_attitude()
 	//   The initial attitude is quaternion < q0, q1, q2, q3 >
 	// const float q[4] = {_initial_attitude[0], _initial_attitude[1],
 	//         _initial_attitude[2], _initial_attitude[3]};
-		//   Verified!
 
 	//   The body z axis in world frame is < z0, z1, z2 >, we can obtain this as the
 	// 3rd column of the DCM matrix, which converts a body frame vector to world
@@ -117,7 +97,6 @@ void SimpleLander::detilt_initial_attitude()
 	// const float z[3] = {2.0f*(q[0]*q[2] + q[1]*q[3]),
 	//         2.0f*(q[2]*q[3] - q[0]*q[1]),
 	//         q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]};
-		//   Verified!
 
 	//   The smallest rotation to make the body z axis parallel to world z axis is
 	// quaternion < p0, p1, p2, p3 >:
@@ -152,7 +131,6 @@ void SimpleLander::detilt_initial_attitude()
 	//       (q[2]*q[3] - q[0]*q[1])/sqrtf(q[0]*q[0] + q[3]*q[3]),
 	//       -(q[0]*q[2] + q[1]*q[3])/sqrtf(q[0]*q[0] + q[3]*q[3]),
 	//       0.0f};
-		//   Verified!
 
 	//   The attitude after the body z axis has rotated parallel to the world z axis
 	// is quaternion < r0, r1, r2, r3 >, find it using the Hamilton product p*q:
@@ -180,7 +158,6 @@ void SimpleLander::detilt_initial_attitude()
 	//    = d/sqrt(aa + dd)
 	// const float r[4] = {q[0]/sqrtf(q[0]*q[0] + q[3]*q[3]),
 	//         0.0f, 0.0f, q[3]/sqrtf(q[0]*q[0] + q[3]*q[3])};
-		//   Verified!
 
 	// Need to handle corner case where body z axis is very close to opposite of
 	// world z axis (vehicle inverted).
@@ -199,7 +176,6 @@ void SimpleLander::compute_control_tilt_thrust()
 	_vel_err_wld[0] = _lander_states.velocity[0] - _lander_controls.velocity[0];
 	_vel_err_wld[1] = _lander_states.velocity[1] - _lander_controls.velocity[1];
 	_vel_err_wld[2] = _lander_states.velocity[2] - _lander_controls.velocity[2];
-		//   Verified!
 
 	//   Convert velocity error to body frame using the (current) attitude DCM.
 	const float q0q0 = _lander_states.attitude[0]*_lander_states.attitude[0];
@@ -228,7 +204,6 @@ void SimpleLander::compute_control_tilt_thrust()
 		dcm01*_vel_err_wld[0] + dcm11*_vel_err_wld[1] + dcm21*_vel_err_wld[2];
 	_vel_err_bdy[2] =
 		dcm02*_vel_err_wld[0] + dcm12*_vel_err_wld[1] + dcm22*_vel_err_wld[2];
-		//   Verified!
 
 	//   Apply the gains (which are in the body frame) to the velocity error.  Note
 	// that the acceleration command is pointing in the direction of increasing the
@@ -236,7 +211,6 @@ void SimpleLander::compute_control_tilt_thrust()
 	_acc_cmd_bdy[0] = _lander_gains.proprtnl[0]*_vel_err_bdy[0];
 	_acc_cmd_bdy[1] = _lander_gains.proprtnl[1]*_vel_err_bdy[1];
 	_acc_cmd_bdy[2] = _lander_gains.proprtnl[2]*_vel_err_bdy[2];
-		//   Verified!
 
 	//   Rotate back to world frame
 	_acc_cmd_wld[0] =
@@ -245,7 +219,6 @@ void SimpleLander::compute_control_tilt_thrust()
 		dcm10*_acc_cmd_bdy[0] + dcm11*_acc_cmd_bdy[1] + dcm12*_acc_cmd_bdy[2];
 	_acc_cmd_wld[2] =
 		dcm20*_acc_cmd_bdy[0] + dcm21*_acc_cmd_bdy[1] + dcm22*_acc_cmd_bdy[2];
-		//   Verified!
 
 	//   Negate acceleration command so that feedback is negative, scale to
 	// propulsion system throttle signal, subtract offset for hover throttle.  We're
@@ -260,12 +233,10 @@ void SimpleLander::compute_control_tilt_thrust()
 	_thrust[1] = -_acc_cmd_wld[1];
 	_thrust[2] = -_acc_cmd_wld[2] - _hover_throttle;
 	_thrust[2] = _thrust[2] < -_minimum_throttle ? _thrust[2] : -_minimum_throttle;
-		//   Verified!
 
 	//   Compute the total thrust value
 	_lander_controls.thrust = sqrt(_thrust[0]*_thrust[0]
 		+ _thrust[1]*_thrust[1] + _thrust[2]*_thrust[2]);
-		//   Verified!
 
 	//   Compute the attitude which would point the body z axis opposite to the
 	// desired thrust vector.  We will compute the quaternion,
@@ -306,5 +277,4 @@ void SimpleLander::compute_control_tilt_thrust()
 	_control_tilt[1] = 0.5f*_thrust[1]/_control_tilt[0];
 	_control_tilt[2] = -0.5f*_thrust[0]/_control_tilt[0];
 	_control_tilt[3] = 0.0f;
-		//   Verified!
 }

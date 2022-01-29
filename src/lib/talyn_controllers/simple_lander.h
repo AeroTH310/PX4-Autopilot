@@ -55,14 +55,6 @@ public:
 	void detilt_initial_attitude();
 	void compute_control_tilt_thrust();
 
-	////////////////////////////////////////////////////////////////////////////////
-	//  Delete after debugging over
-	simple_lander_states _internal_states {.engage_lander = false,
-		.velocity = {0.0f, 0.0f, 0.0f,}, .attitude = {1.0f, 0.0f, 0.0f, 0.0f}};
-
-	simple_lander_states get_internal_states(){ return _internal_states; };
-	////////////////////////////////////////////////////////////////////////////////
-
 private:
 	float _pause{0.0f};
 	float _land_speed_mps{1.0f};

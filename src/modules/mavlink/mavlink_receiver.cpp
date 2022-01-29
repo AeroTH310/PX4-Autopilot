@@ -3215,8 +3215,6 @@ MavlinkReceiver::run()
 			_debug_lander_calls += 1;
 			if (_debug_time > _debug_dt_target)
 			{
-				//SimpleLander::simple_lander_states _internal_states = lander.get_internal_states();
-				SimpleLander::simple_lander_gains _internal_gains = lander.get_gains();
 				//vehicle_attitude_setpoint_s _attitude_setpoint_test{};
 				//_vehicle_attitude_setpoint_sub.copy(&_attitude_setpoint_test);
 				//vehicle_attitude_setpoint_s _mc_virtual_att_sp_test{};
@@ -3232,10 +3230,6 @@ MavlinkReceiver::run()
 					(double)lander.get_land_speed(),
 					(double)lander.get_hover_throttle());//,
 					// _internal_states.engage_lander ? "true" : "false");
-				PX4_INFO("proportional gains = < %1.3f, %1.3f, %1.3f >",
-					(double)_internal_gains.proprtnl[0],
-					(double)_internal_gains.proprtnl[1],
-					(double)_internal_gains.proprtnl[2]);
 				PX4_INFO("velocity control = < % 1.3f, % 1.3f, % 1.3f >",
 					(double)_lander_controls.velocity[0],
 					(double)_lander_controls.velocity[1],
@@ -3259,11 +3253,6 @@ MavlinkReceiver::run()
 					(double)_lander_states.attitude[1],
 					(double)_lander_states.attitude[2],
 					(double)_lander_states.attitude[3]);
-				//PX4_INFO("int thrust vectr = < % 1.3f, % 1.3f, % 1.3f > | thrust = %1.3f",
-				//	(double)(_internal_states.velocity[0]*_lander_controls.thrust),
-				//	(double)(_internal_states.velocity[1]*_lander_controls.thrust),
-				//	(double)(_internal_states.velocity[2]*_lander_controls.thrust),
-				//	(double)_lander_controls.thrust);
 				//PX4_INFO("spoof messge thr = < % 1.3f, % 1.3f, % 1.3f > | thrust = %1.3f",
 				//	(double)spoof_attitude_target.thrust_body[0],
 				//	(double)spoof_attitude_target.thrust_body[1],
@@ -3292,11 +3281,6 @@ MavlinkReceiver::run()
 				//	(double)sqrt(_attitude_setpoint_test.thrust_body[0]*_attitude_setpoint_test.thrust_body[0]
 				//		+ _attitude_setpoint_test.thrust_body[1]*_attitude_setpoint_test.thrust_body[1]
 				//		+ _attitude_setpoint_test.thrust_body[2]*_attitude_setpoint_test.thrust_body[2]));
-				//PX4_INFO("control tilt = < % 1.3f, % 1.3f, % 1.3f, % 1.3f >",
-				//	(double)_internal_states.attitude[0],
-				//	(double)_internal_states.attitude[1],
-				//	(double)_internal_states.attitude[2],
-				//	(double)_internal_states.attitude[3]);
 				_debug_time = 0.0f;
 				_debug_lander_calls = 0;
 			}
